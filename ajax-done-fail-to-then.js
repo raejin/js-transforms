@@ -11,8 +11,11 @@ export default function transformer(file, api) {
     })
 
     .filter(path => {
-      return path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression' &&
-        path.node.object.callee.property.name === 'ajax' && (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery' )
+      const isCorrectExpr = path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression';
+      const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
+      return isCorrectExpr &&
+        (lowercaseName === 'ajax' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
+        && (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery')
     })
 
     // returning the parent of [$.ajax] node

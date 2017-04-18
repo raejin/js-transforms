@@ -10,7 +10,11 @@ export default function transformer(file, api) {
 
     .filter(path => {
       const node = path.node;
-      return (node.object.name === '$' || node.object.name === 'jQuery') && node.property.name === 'ajax';
+
+      const is$Form = (node.object.name === '$' || node.object.name === 'jQuery');
+      const nodeName = is$Form && node.property.name.toLowerCase ? node.property.name.toLowerCase() : false;
+      return is$Form
+      && (nodeName === 'ajax' || nodeName === 'post' || nodeName === 'get' || nodeName === 'put');
     })
 
     // returning the parent of [$.ajax] node
