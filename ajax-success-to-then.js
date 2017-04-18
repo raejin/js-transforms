@@ -43,50 +43,42 @@ export default function transformer(file, api) {
       let errorCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'error'))
       let completeCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'complete'))
 
-      // if (successCallback === -1 && errorCallback === -1 && completeCallback === -1) {
-      //   return false;
-      // }
-
-      if (errorCallback === -1 && completeCallback === -1) {
+      if (errorCallback === -1 && completeCallback === -1 && successCallback !== -1) {
         // only success cb is defined
         const successNode = path.node.arguments[0].properties.splice(successCallback, 1)[0];
-        // successNode.value.id = j.identifier('success')
         const thenVar = j.identifier('then')
         return j.callExpression(j.memberExpression(path.node, thenVar), [successNode.value]);
 
-      } else if (errorCallback === -1 && completeCallback !== -1) {
-        // success & complete callbacks defined
+      } else if (errorCallback === -1 && completeCallback !== -1 && successCallback !== -1) {
+        // success & complete callbacks defined, errorCallback not defined
         const successNode = path.node.arguments[0].properties.splice(successCallback, 1)[0];
-        // successNode.value.id = j.identifier('success')
         completeCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'complete'))
         const completeNode = path.node.arguments[0].properties.splice(completeCallback, 1)[0];
         const thenVar = j.identifier('then')
         const callExpr = j.callExpression(j.memberExpression(path.node, thenVar), [successNode.value]);
-        // completeNode.value.id = j.identifier('complete')
-        return j.callExpression(j.memberExpression(callExpr, thenVar), [completeNode.value]);
+        return j.callExpression(j.memberExpression(callExpr, thenVar), [completeNode.value, completeNode.value]);
 
-      } else if (successCallback === -1) {
+      } else if (successCallback === -1 && errorCallback !== -1 && completeCallback === -1) {
+        // only error callback is defined
         const errorNode = path.node.arguments[0].properties.splice(errorCallback, 1)[0];
-        // errorNode.value.id = j.identifier('error')
-        const thenVar = j.identifier('catch')
-        return j.callExpression(j.memberExpression(path.node, thenVar), [errorNode.value]);
+        const thenVar = j.identifier('then')
+        return j.callExpression(j.memberExpression(path.node, thenVar), [j.literal(null), errorNode.value]);
+
       } else if (completeCallback === -1 && successCallback !== -1 && errorCallback !== -1) {
-        // both defined
+        // both defined, but completeCallback is not defined
         const successNode = path.node.arguments[0].properties.splice(successCallback, 1)[0];
         errorCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'error'))
         const errorNode = path.node.arguments[0].properties.splice(errorCallback, 1)[0];
 
-        // successNode.value.id = j.identifier('success')
-        // errorNode.value.id = j.identifier('error')
         const thenVar = j.identifier('then')
         return j.callExpression(j.memberExpression(path.node, thenVar), [successNode.value, errorNode.value]);
 
       } else if (completeCallback !== -1 && successCallback === -1 && errorCallback === -1) {
         // if only complete callback exists
         const completeNode = path.node.arguments[0].properties.splice(completeCallback, 1)[0];
-        const alwaysVar = j.identifier('always')
+        const thenVar = j.identifier('then')
 
-        return j.callExpression(j.memberExpression(path.node, alwaysVar), [completeNode.value]);
+        return j.callExpression(j.memberExpression(path.node, thenVar), [completeNode.value, completeNode.value]);
 
       } else {
         // all three defined
@@ -97,13 +89,10 @@ export default function transformer(file, api) {
         completeCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'complete'))
         const completeNode = path.node.arguments[0].properties.splice(completeCallback, 1)[0];
 
-        // successNode.value.id = j.identifier('success')
-        // errorNode.value.id = j.identifier('error')
         const thenVar = j.identifier('then')
 
         const callExpr = j.callExpression(j.memberExpression(path.node, thenVar), [successNode.value, errorNode.value]);
-        completeNode.value.id = j.identifier('complete')
-        return j.callExpression(j.memberExpression(callExpr, thenVar), [completeNode.value]);
+        return j.callExpression(j.memberExpression(callExpr, thenVar), [completeNode.value, completeNode.value]);
 
       }
     })
