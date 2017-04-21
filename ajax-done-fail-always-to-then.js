@@ -29,27 +29,34 @@ export default function transformer(file, api) {
     })
 
     .map(path => {
-      return path.parent.parent // back to [$.ajax] callExpression
+      return path.parent.parent
     })
 
     // make sure it is a callExpression $.ajax(...), not like `const ajax = $.ajax;`
-    // and also make sure there isn't a always callback!
     .filter(path => {
-      return path.node.type === 'CallExpression' && path.parent.node.type !== 'MemberExpression';
+      return path.node.type === 'CallExpression' && path.parent.node.type === 'MemberExpression' &&
+      path.parent.node.property.name === 'always';
+    })
+
+    .map(path => {
+      return path.parent.parent // back to [$.ajax] callExpression
     })
 
     // find 'success' or 'error' callbacks defined on the $.ajax(param)
     // and move them to the end of $.ajax(param).then(successCallback, errorCallback)
     .replaceWith(path => {
       isModified = true
-      const doneMemberExpr = path.node.callee.object
+      const doneMemberExpr = path.node.callee.object.callee.object
       const originalCallexpr = doneMemberExpr.callee.object
       const doneCallback = doneMemberExpr.arguments[0]
-      const failCallback = path.node.arguments[0]
+      const failCallback = path.node.callee.object.arguments[0]
+      const alwaysCallback = path.node.arguments[0]
 
       const thenVar = j.identifier('then')
 
-      return j.callExpression(j.memberExpression(originalCallexpr, thenVar), [doneCallback, failCallback]);
+      const doneFailCallExpr = j.callExpression(j.memberExpression(originalCallexpr, thenVar), [doneCallback, failCallback])
+
+      return j.callExpression(j.memberExpression(doneFailCallExpr, thenVar), [alwaysCallback, alwaysCallback]);
     })
 
     if (isModified) {
