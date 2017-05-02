@@ -43,8 +43,8 @@ export default function transformer(file, api) {
       isModified = true
       const doneMemberExpr = path.node.callee.object
       const originalCallexpr = doneMemberExpr.callee.object
-      const doneCallback = doneMemberExpr.arguments[0]
-      const failCallback = path.node.arguments[0]
+      const failCallback = doneMemberExpr.arguments[0]
+      const doneCallback = path.node.arguments[0]
 
       const thenVar = j.identifier('then')
 

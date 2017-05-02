@@ -5,14 +5,18 @@ export default function transformer(file, api) {
 
   const codemod = j(file.source)
 
-    // find [$.ajax().done(..)] looking code snippet
+    // find [$.ajax().fail(..)] looking code snippet
     .find(j.MemberExpression, {
       property: {type: j.identifier, name: 'done'}
     })
 
     .filter(path => {
-      return path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression' &&
-        path.node.object.callee.property.name === 'ajax' && (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery' )
+      const isCorrectExpr = path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression';
+      const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
+
+      return isCorrectExpr &&
+        (lowercaseName === 'ajax' || lowercaseName === 'post' || lowercaseName === 'get') &&
+        (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery' )
     })
 
     // returning the parent of [$.ajax] node
@@ -21,7 +25,7 @@ export default function transformer(file, api) {
     })
 
   .filter(path => {
-      // only $.ajax().done() is present
+      // only $.ajax().fail() is present
       return path.node.type === 'CallExpression' && path.parent.node.type !== 'MemberExpression'
     })
 
@@ -32,7 +36,7 @@ export default function transformer(file, api) {
 
       const thenVar = j.identifier('then')
 
-      return j.callExpression(j.memberExpression(originalExpr, thenVar), [doneCallback]);
+      return j.callExpression(j.memberExpression(originalExpr, thenVar), [j.literal(null), doneCallback]);
     })
 
     if (isModified) {
