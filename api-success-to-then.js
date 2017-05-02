@@ -65,8 +65,8 @@ export default function transformer(file, api) {
           path.node.arguments.splice(1, 1);
         }
 
-        const thenVar = j.identifier('catch')
-        return j.callExpression(j.memberExpression(path.node, thenVar), [errorNode.value]);
+        const thenVar = j.identifier('then')
+        return j.callExpression(j.memberExpression(path.node, thenVar), [j.literal(null), errorNode.value]);
 
       } else {
         const successNode = path.node.arguments[1].properties.splice(successCallback, 1)[0];
