@@ -7,15 +7,15 @@ export default function transformer(file, api) {
 
     // find [$.ajax().done(..)] looking code snippet
     .find(j.MemberExpression, {
-      property: {type: j.identifier, name: 'done'},
+      property: {type: j.identifier, name: 'success'},
     })
 
     .filter(path => {
       const isCorrectExpr = path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression';
       const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
       return isCorrectExpr &&
-        (lowercaseName === 'ajax' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
-        && (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery')
+        (lowercaseName === 'deleteRequest' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
+        && (path.node.object.callee.object.name === 'Api')
     })
 
     // returning the parent of [$.ajax] node

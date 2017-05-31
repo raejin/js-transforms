@@ -28,8 +28,16 @@ export default function transformer(file, api) {
     })
 
     .filter(path => {
-      const properties = path.node.arguments[0].properties
-      return properties.findIndex((x) => (x.key.name === 'success')) !== -1 ||
+      let properties;
+      if (path.node.arguments[0].type === 'ObjectExpression') {
+        properties = path.node.arguments[0].properties
+      } else if (path.node.arguments.length > 1 && path.node.arguments[1].type === 'ObjectExpression') {
+        properties = path.node.arguments[1].properties
+      } else {
+        return false
+      }
+
+      return properties && properties.findIndex((x) => (x.key.name === 'success')) !== -1 ||
         properties.findIndex((x) => (x.key.name === 'error')) !== -1 ||
         properties.findIndex((x) => (x.key.name === 'complete')) !== -1
     })
@@ -38,7 +46,6 @@ export default function transformer(file, api) {
     // and move them to the end of $.ajax(param).then(successCallback, errorCallback)
     .replaceWith(path => {
       isModified = true;
-
       let successCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'success'))
       let errorCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'error'))
       let completeCallback = path.node.arguments[0].properties.findIndex((x) => (x.key.name === 'complete'))

@@ -7,7 +7,7 @@ export default function transformer(file, api) {
 
     // find [$.ajax().fail(..)] looking code snippet
     .find(j.MemberExpression, {
-      property: {type: j.identifier, name: 'done'}
+      property: {type: j.identifier, name: 'fail'}
     })
 
     .filter(path => {
@@ -15,8 +15,8 @@ export default function transformer(file, api) {
       const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
 
       return isCorrectExpr &&
-        (lowercaseName === 'ajax' || lowercaseName === 'post' || lowercaseName === 'get') &&
-        (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery' )
+        (lowercaseName === 'get' || lowercaseName === 'post' || lowercaseName === 'put' || lowercaseName === 'deleteRequest') &&
+        (path.node.object.callee.object.name === 'Api')
     })
 
     // returning the parent of [$.ajax] node
@@ -32,11 +32,11 @@ export default function transformer(file, api) {
     .replaceWith(path => {
       isModified = true
       const originalExpr = path.node.callee.object
-      const doneCallback = path.node.arguments[0]
+      const failCallback = path.node.arguments[0]
 
       const thenVar = j.identifier('then')
 
-      return j.callExpression(j.memberExpression(originalExpr, thenVar), [doneCallback]);
+      return j.callExpression(j.memberExpression(originalExpr, thenVar), [j.literal(null), failCallback]);
     })
 
     if (isModified) {

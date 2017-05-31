@@ -14,8 +14,8 @@ export default function transformer(file, api) {
       const isCorrectExpr = path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression';
       const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
       return isCorrectExpr &&
-        (lowercaseName === 'ajax' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
-        && (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery')
+        (lowercaseName === 'deleteRequest' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
+        && (path.node.object.callee.object.name === 'Api')
     })
 
     // returning the parent of [$.ajax] node
@@ -25,7 +25,7 @@ export default function transformer(file, api) {
 
     .filter(path => {
       return path.node.type === 'CallExpression' && path.parent.node.type === 'MemberExpression' &&
-        path.parent.node.property.name === 'error'
+        path.parent.node.property.name === 'fail'
     })
 
     .map(path => {

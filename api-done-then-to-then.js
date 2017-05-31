@@ -14,8 +14,8 @@ export default function transformer(file, api) {
       const isCorrectExpr = path.node.object.type === 'CallExpression' && path.node.object.callee.type === 'MemberExpression';
       const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
       return isCorrectExpr &&
-        (lowercaseName === 'ajax' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
-        && (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery')
+        (lowercaseName === 'deleteRequest' || lowercaseName === 'get' || lowercaseName === 'post'|| lowercaseName === 'put')
+        && (path.node.object.callee.object.name === 'Api')
     })
 
     // returning the parent of [$.ajax] node
@@ -25,7 +25,7 @@ export default function transformer(file, api) {
 
     .filter(path => {
       return path.node.type === 'CallExpression' && path.parent.node.type === 'MemberExpression' &&
-        path.parent.node.property.name === 'error'
+        path.parent.node.property.name === 'then' && path.parent.node.object && path.parent.node.object.callee.property.name === 'done'
     })
 
     .map(path => {
@@ -45,11 +45,13 @@ export default function transformer(file, api) {
       const doneMemberExpr = path.node.callee.object
       const originalCallexpr = doneMemberExpr.callee.object
       const doneCallback = doneMemberExpr.arguments[0]
-      const failCallback = path.node.arguments[0]
+      const thenCallback = path.node.arguments[0]
 
       const thenVar = j.identifier('then')
 
-      return j.callExpression(j.memberExpression(originalCallexpr, thenVar), [doneCallback, failCallback]);
+      const doneFailCallExpr = j.callExpression(j.memberExpression(originalCallexpr, thenVar), [doneCallback])
+
+      return j.callExpression(j.memberExpression(doneFailCallExpr, thenVar), [thenCallback]);
     })
 
     if (isModified) {

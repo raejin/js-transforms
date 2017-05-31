@@ -15,8 +15,8 @@ export default function transformer(file, api) {
       const lowercaseName = isCorrectExpr ? path.node.object.callee.property.name.toLowerCase() : false;
 
       return isCorrectExpr &&
-        (lowercaseName === 'ajax' || lowercaseName === 'post' || lowercaseName === 'get') &&
-        (path.node.object.callee.object.name === '$' || path.node.object.callee.object.name === 'jQuery' )
+        (lowercaseName === 'get' || lowercaseName === 'post' || lowercaseName === 'put' || lowercaseName === 'deleteRequest') &&
+        (path.node.object.callee.object.name === 'Api')
     })
 
     // returning the parent of [$.ajax] node
